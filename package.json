@@ -7,12 +7,16 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build --api=\"http://localhost:3000\" --token=\"xxxxxxxxxxxxxxxxx\" --team=\"hayokra\"",
+    "build:action": "ncc build turbo-server.js -o dist",
+    "build": "rm -rf node_modules/.cache/turbo && turbo run build --api=\"http://localhost:9080\" --token=\"xxxxxxxxxxxxxxxxx\" --team=\"hayokra\"",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@types/node": "^17.0.7",
+    "@vercel/ncc": "^0.33.1",
+    "fs-extra": "^10.0.0",
     "prettier": "^2.5.1",
     "turbo": "latest"
   },
@@ -40,6 +44,8 @@
     "node": ">=14.0.0"
   },
   "dependencies": {
-    "express": "^4.17.2"
+    "@actions/cache": "^1.0.8",
+    "express": "^4.17.2",
+    "express-async-handler": "^1.2.0"
   }
 }

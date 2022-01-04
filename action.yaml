@@ -1,0 +1,7 @@
+name: 'TurboRepo with github cache'
+description: 'Setup ups a local cache proxy server for TurboRepo.'
+author: 'felixmosh'
+
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
