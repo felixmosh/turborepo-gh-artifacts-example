@@ -32,6 +32,6 @@ yarn-error.log*
 
 # turbo
 .turbo
-cache
+turbo-cache
 
 .idea

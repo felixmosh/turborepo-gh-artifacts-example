@@ -2,12 +2,25 @@ const { create } = require('@actions/artifact');
 const path = require('path');
 const fs = require('fs-extra');
 
-const cacheDir = path.join(__dirname, 'cache');
+async function main() {
+  const tempDir = path.join(
+    process.env['RUNNER_TEMP'] || __dirname,
+    'turbo-cache'
+  );
 
-async function  main() {
+  fs.ensureDirSync(tempDir);
+
   const client = create();
 
-  await client.uploadArtifact()
+  const files = fs.readdirSync(tempDir);
+
+  const artifactFiles = files.filter(filename => filename.endsWith('.gz'));
+
+  await Promise.all(artifactFiles.map(filename => {
+    const filenameWithoutExt = path.basename(filename, path.extname(filename));
+
+    return client.uploadArtifact(filenameWithoutExt, filename, tempDir);
+  }));
 }
 
-main().catch(console.error)
+main().catch(console.error);

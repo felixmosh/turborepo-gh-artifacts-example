@@ -1,14 +1,21 @@
 const express = require("express");
-const app = express();
-const port = process.env.PORT || 9080;
 const fs = require("fs-extra");
 const path = require("path");
-
-const tempDir = process.env['RUNNER_TEMP'] || path.join(__dirname, "cache");
+const core = require("@actions/core");
 
 async function startServer() {
+  const port = process.env.PORT || 9080;
+  const tempDir = path.join(
+    process.env["RUNNER_TEMP"] || __dirname,
+    "turbo-cache"
+  );
+
+  fs.ensureDirSync(tempDir);
+
+  const app = express();
+
   app.all("*", (req, res, next) => {
-    console.log(
+    core.info(
       `Got a ${req.method} request`,
       req.path,
       req.params,
@@ -34,6 +41,7 @@ async function startServer() {
 
     // This catches any errors that happen while creating the readable stream (usually invalid names)
     readStream.on("error", function (err) {
+      core.error(err)
       res.end(err);
     });
   });
@@ -48,7 +56,7 @@ async function startServer() {
     req.pipe(writeStream);
 
     writeStream.on("error", (err) => {
-      console.log(err);
+      core.error(err);
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
@@ -57,13 +65,15 @@ async function startServer() {
     });
   });
 
+  app.disable("etag");
+
   app.listen(port, () => {
-    console.log(`Temp dir: ${tempDir}`);
-    console.log(`Example app listening at http://localhost:${port}`);
+    core.debug(`Cache dir: ${tempDir}`);
+    core.info(`Local Turbo server is listening at http://localhost:${port}`);
   });
 }
 
 startServer().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  core.error(error);
+  core.setFailed(`Server failed due to ${error}.`);
 });
