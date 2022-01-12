@@ -3,7 +3,7 @@ const core = require('@actions/core');
 const path = require('path');
 const fs = require('fs-extra');
 
-async function main() {
+async function upload() {
   const tempDir = path.join(
     process.env['RUNNER_TEMP'] || __dirname,
     'turbo-cache'
@@ -39,4 +39,4 @@ async function main() {
   );
 }
 
-main().catch(console.error);
+upload().catch(console.error);

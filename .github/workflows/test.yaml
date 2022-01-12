@@ -33,7 +33,7 @@ jobs:
         env:
           CI: true
 
-      - name: Start cache local server
+      - name: Turborepo local server
         uses: ./
 
       - name: Build

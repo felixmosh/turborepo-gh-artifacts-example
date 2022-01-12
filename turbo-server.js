@@ -37,9 +37,8 @@ async function startServer() {
       try {
         await artifactClient.downloadArtifact(artifactId, tempDir);
       } catch (e) {
-        core.info(e)
+        core.info(e);
       }
-
 
       const filepath = path.join(tempDir, filename);
 
@@ -64,7 +63,6 @@ async function startServer() {
   app.put("/v8/artifacts/:artifactId", (req, res) => {
     const artifactId = req.params.artifactId;
     const filename = `${artifactId}.gz`;
-    fs.ensureDirSync(tempDir);
 
     const writeStream = fs.createWriteStream(path.join(tempDir, filename));
 
@@ -76,11 +74,7 @@ async function startServer() {
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
-    req.on("end", async () => {
-      if(fs.existsSync(path.join(tempDir, filename))) {
-        await artifactClient.uploadArtifact(artifactId, [filename], tempDir);
-      }
-
+    req.on("end", () => {
       res.send("OK");
     });
   });
