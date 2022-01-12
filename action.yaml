@@ -1,4 +1,4 @@
-name: 'TurboRepo with github cache'
+name: 'TurboRepo with github artifact'
 description: 'Setup ups a local cache proxy server for TurboRepo.'
 author: 'felixmosh'
 

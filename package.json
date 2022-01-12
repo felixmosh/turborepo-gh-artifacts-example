@@ -44,6 +44,7 @@
     "node": ">=14.0.0"
   },
   "dependencies": {
+    "@actions/artifact": "^0.6.1",
     "@actions/cache": "^1.0.8",
     "express": "^4.17.2",
     "express-async-handler": "^1.2.0"
