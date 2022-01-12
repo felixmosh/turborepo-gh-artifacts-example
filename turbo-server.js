@@ -1,7 +1,6 @@
 const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
-const core = require("@actions/core");
 const { create } = require("@actions/artifact");
 const asyncHandler = require("express-async-handler");
 
@@ -18,7 +17,7 @@ async function startServer() {
   const artifactClient = create();
 
   app.all("*", (req, res, next) => {
-    core.info(
+    console.info(
       `Got a ${req.method} request`,
       req.path,
       req.params,
@@ -37,7 +36,7 @@ async function startServer() {
       try {
         await artifactClient.downloadArtifact(artifactId, tempDir);
       } catch (e) {
-        core.info(e);
+        console.log(e);
       }
 
       const filepath = path.join(tempDir, filename);
@@ -54,7 +53,7 @@ async function startServer() {
 
       // This catches any errors that happen while creating the readable stream (usually invalid names)
       readStream.on("error", function (err) {
-        core.error(err);
+        console.error(err);
         res.end(err);
       });
     })
@@ -70,7 +69,7 @@ async function startServer() {
     req.pipe(writeStream);
 
     writeStream.on("error", (err) => {
-      core.error(err);
+      console.error(err);
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
@@ -82,12 +81,12 @@ async function startServer() {
   app.disable("etag");
 
   app.listen(port, () => {
-    core.debug(`Cache dir: ${tempDir}`);
-    core.info(`Local Turbo server is listening at http://127.0.0.1:${port}`);
+    console.log(`Cache dir: ${tempDir}`);
+    console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
   });
 }
 
 startServer().catch((error) => {
-  core.error(error);
-  core.setFailed(`Server failed due to ${error}.`);
+  console.error(error);
+  process.exit(1);
 });

@@ -20,6 +20,14 @@ async function upload() {
 
   fs.ensureDirSync(tempDir);
 
+  core.info("Server logs:");
+  core.info(
+    fs.readFileSync(path.join(tempDir, "out.log"), {
+      encoding: "utf8",
+      flag: "r",
+    })
+  );
+
   const client = create();
 
   const files = fs.readdirSync(tempDir);
