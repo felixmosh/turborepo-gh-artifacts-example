@@ -34,18 +34,9 @@ jobs:
           CI: true
 
       - name: Start cache local server
-        id: local-server
-        run: |
-          node turbo-server.js &
-          echo "::set-output name=LOCAL_TURBO_SERVER_PID::$!"
+        uses: ./
 
       - name: Build
         run: yarn build
-
-      - name: Upload artifacts
-        uses: ./
-
-      - name: Stop cache local server
-        run: kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
 
 

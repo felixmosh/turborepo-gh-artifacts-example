@@ -4,4 +4,5 @@ author: 'felixmosh'
 
 runs:
   using: 'node12'
-  main: 'upload.js'
+  main: 'starter.js'
+  post: 'stopper.js'

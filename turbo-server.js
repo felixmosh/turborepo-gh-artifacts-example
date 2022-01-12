@@ -2,6 +2,8 @@ const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
 const core = require("@actions/core");
+const { create } = require("@actions/artifact");
+const asyncHandler = require("express-async-handler");
 
 async function startServer() {
   const port = process.env.PORT || 9080;
@@ -13,6 +15,7 @@ async function startServer() {
   fs.ensureDirSync(tempDir);
 
   const app = express();
+  const artifactClient = create();
 
   app.all("*", (req, res, next) => {
     core.info(
@@ -25,29 +28,42 @@ async function startServer() {
     next();
   });
 
-  app.get("/v8/artifacts/:artifactId", (req, res) => {
-    const filename = `${req.params.artifactId}.gz`;
-    const filepath = path.join(tempDir, filename);
+  app.get(
+    "/v8/artifacts/:artifactId",
+    asyncHandler(async (req, res) => {
+      const { artifactId } = req.params;
 
-    if (!fs.pathExistsSync(filepath)) {
-      return res.status(404).send("Not found");
-    }
+      const filename = `${artifactId}.gz`;
+      try {
+        await artifactClient.downloadArtifact(artifactId, tempDir);
+      } catch (e) {
+        core.info(e)
+      }
 
-    const readStream = fs.createReadStream(filepath);
-    readStream.on("open", function () {
-      // This just pipes the read stream to the response object (which goes to the client)
-      readStream.pipe(res);
-    });
 
-    // This catches any errors that happen while creating the readable stream (usually invalid names)
-    readStream.on("error", function (err) {
-      core.error(err)
-      res.end(err);
-    });
-  });
+      const filepath = path.join(tempDir, filename);
+
+      if (!fs.pathExistsSync(filepath)) {
+        return res.status(404).send("Not found");
+      }
+
+      const readStream = fs.createReadStream(filepath);
+      readStream.on("open", function () {
+        // This just pipes the read stream to the response object (which goes to the client)
+        readStream.pipe(res);
+      });
+
+      // This catches any errors that happen while creating the readable stream (usually invalid names)
+      readStream.on("error", function (err) {
+        core.error(err);
+        res.end(err);
+      });
+    })
+  );
 
   app.put("/v8/artifacts/:artifactId", (req, res) => {
-    const filename = `${req.params.artifactId}.gz`;
+    const artifactId = req.params.artifactId;
+    const filename = `${artifactId}.gz`;
     fs.ensureDirSync(tempDir);
 
     const writeStream = fs.createWriteStream(path.join(tempDir, filename));
@@ -60,7 +76,11 @@ async function startServer() {
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
-    req.on("end", () => {
+    req.on("end", async () => {
+      if(fs.existsSync(path.join(tempDir, filename))) {
+        await artifactClient.uploadArtifact(artifactId, [filename], tempDir);
+      }
+
       res.send("OK");
     });
   });
@@ -69,7 +89,7 @@ async function startServer() {
 
   app.listen(port, () => {
     core.debug(`Cache dir: ${tempDir}`);
-    core.info(`Local Turbo server is listening at http://localhost:${port}`);
+    core.info(`Local Turbo server is listening at http://127.0.0.1:${port}`);
   });
 }
 
