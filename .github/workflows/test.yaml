@@ -21,15 +21,15 @@ jobs:
           CI: true
 
       - name: Start cache local server
+        id: local-server
         run: |
           node turbo-server.js &
-          export LOCAL_TURBO_SERVER_PID=$!
-          echo "::set-env name=LOCAL_TURBO_SERVER_PID::$LOCAL_TURBO_SERVER_PID"
+          echo "::set-output name=LOCAL_TURBO_SERVER_PID::$!"
       - name: work
         run: | 
-          echo "$LOCAL_TURBO_SERVER_PID"
-          curl "http://127.0.0.1:9008/v8/artifacts/bla"
+          echo "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
+          curl "http://127.0.0.1:9080/v8/artifacts/bla"
           sleep 5
-          kill "$LOCAL_TURBO_SERVER_PID"
+          kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
         
 
