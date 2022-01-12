@@ -4,7 +4,7 @@ const port = process.env.PORT || 9080;
 const fs = require("fs-extra");
 const path = require("path");
 
-const baseDir = path.join(__dirname, "cache");
+const tempDir = process.env['RUNNER_TEMP'] || path.join(__dirname, "cache");
 
 async function startServer() {
   app.all("*", (req, res, next) => {
@@ -20,7 +20,7 @@ async function startServer() {
 
   app.get("/v8/artifacts/:artifactId", (req, res) => {
     const filename = `${req.params.artifactId}.gz`;
-    const filepath = path.join(baseDir, filename);
+    const filepath = path.join(tempDir, filename);
 
     if (!fs.pathExistsSync(filepath)) {
       return res.status(404).send("Not found");
@@ -40,9 +40,9 @@ async function startServer() {
 
   app.put("/v8/artifacts/:artifactId", (req, res) => {
     const filename = `${req.params.artifactId}.gz`;
-    fs.ensureDirSync(baseDir);
+    fs.ensureDirSync(tempDir);
 
-    const writeStream = fs.createWriteStream(path.join(baseDir, filename));
+    const writeStream = fs.createWriteStream(path.join(tempDir, filename));
 
     // This pipes the POST data to the file
     req.pipe(writeStream);
@@ -58,6 +58,7 @@ async function startServer() {
   });
 
   app.listen(port, () => {
+    console.log(`Temp dir: ${tempDir}`);
     console.log(`Example app listening at http://localhost:${port}`);
   });
 }

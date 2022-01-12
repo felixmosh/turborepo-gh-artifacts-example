@@ -38,11 +38,11 @@ jobs:
         run: |
           node turbo-server.js &
           echo "::set-output name=LOCAL_TURBO_SERVER_PID::$!"
-      - name: work
-        run: | 
-          echo "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
-          curl -I "http://127.0.0.1:9080/v8/artifacts/bla"
-          sleep 5
-          kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
-        
+
+      - name: Build
+        run: yarn build
+
+      - name: Stop cache local server
+        run: kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
+
 
