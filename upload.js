@@ -25,12 +25,15 @@ async function main() {
         artifactFilename,
         path.extname(artifactFilename)
       );
+
       core.info(`Uploading ${artifactFilename}`);
+
       await client.uploadArtifact(
         filenameWithoutExt,
-        [artifactFilename],
+        [path.join(artifactFilename, tempDir)],
         tempDir
       );
+
       core.info(`Uploaded ${artifactFilename} successfully`);
     })
   );
