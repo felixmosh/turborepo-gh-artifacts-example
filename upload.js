@@ -1,4 +1,5 @@
 const { create } = require('@actions/artifact');
+const core = require('@actions/core');
 const path = require('path');
 const fs = require('fs-extra');
 
@@ -16,10 +17,10 @@ async function main() {
 
   const artifactFiles = files.filter(filename => filename.endsWith('.gz'));
 
-  await Promise.all(artifactFiles.map(filename => {
-    const filenameWithoutExt = path.basename(filename, path.extname(filename));
-
-    return client.uploadArtifact(filenameWithoutExt, filename, tempDir);
+  await Promise.all(artifactFiles.map(artifactFilename => {
+    const filenameWithoutExt = path.basename(artifactFilename, path.extname(artifactFilename));
+    core.debug(`Uploading ${artifactFilename}`);
+    return client.uploadArtifact(filenameWithoutExt, artifactFilename, tempDir);
   }));
 }
 
