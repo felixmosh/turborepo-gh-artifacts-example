@@ -43,7 +43,9 @@ jobs:
         run: yarn build
 
       - name: Upload artifacts
-        run: node upload.js
+        run: |
+          ls -l
+          node upload.js
 
       - name: Stop cache local server
         run: kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
