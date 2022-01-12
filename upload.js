@@ -5,7 +5,7 @@ const fs = require("fs-extra");
 
 async function main() {
   const tempDir = path.join(
-    __dirname,
+    process.env["RUNNER_TEMP"] || __dirname,
     "turbo-cache"
   );
 

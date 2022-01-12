@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload artifacts
         run: |
-          ls -l
+          ls -l "$RUNNER_TEMP/turbo-cache"
           node upload.js
 
       - name: Stop cache local server
