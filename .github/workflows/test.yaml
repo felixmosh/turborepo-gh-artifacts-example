@@ -15,6 +15,19 @@ jobs:
         with:
           node-version: 14.x
 
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Install Packages
         run: yarn install --frozen-lockfile
         env:
@@ -28,7 +41,7 @@ jobs:
       - name: work
         run: | 
           echo "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
-          curl "http://127.0.0.1:9080/v8/artifacts/bla"
+          curl -I "http://127.0.0.1:9080/v8/artifacts/bla"
           sleep 5
           kill "${{ steps.local-server.outputs.LOCAL_TURBO_SERVER_PID }}"
         
