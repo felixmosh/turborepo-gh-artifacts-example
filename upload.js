@@ -1,12 +1,12 @@
-const { create } = require("@actions/artifact");
-const core = require("@actions/core");
-const path = require("path");
-const fs = require("fs-extra");
+const { create } = require('@actions/artifact');
+const core = require('@actions/core');
+const path = require('path');
+const fs = require('fs-extra');
 
 async function main() {
   const tempDir = path.join(
-    process.env["RUNNER_TEMP"] || __dirname,
-    "turbo-cache"
+    process.env['RUNNER_TEMP'] || __dirname,
+    'turbo-cache'
   );
 
   fs.ensureDirSync(tempDir);
@@ -15,7 +15,7 @@ async function main() {
 
   const files = fs.readdirSync(tempDir);
 
-  const artifactFiles = files.filter((filename) => filename.endsWith(".gz"));
+  const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
 
   core.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
@@ -30,7 +30,7 @@ async function main() {
 
       await client.uploadArtifact(
         filenameWithoutExt,
-        [path.join(artifactFilename, tempDir)],
+        [path.join(tempDir, artifactFilename)],
         tempDir
       );
 
