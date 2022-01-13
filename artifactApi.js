@@ -7,9 +7,9 @@ class ArtifactApi {
       required: true,
       trimWhitespace: true,
     });
-    core.info(JSON.stringify({ repoToken, l: repoToken.length }, null, 2));
+
     this.axios = new Axios({
-      baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`,
+      baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
       headers: {
         Accept: "application/vnd.github.v3+json",
         Authorization: `Bearer ${repoToken}`,
@@ -19,14 +19,15 @@ class ArtifactApi {
 
   listArtifacts() {
     return this.axios
-      .get("/actions/artifacts", { per_page: 100 })
+      .get("/artifacts", { per_page: 100 })
       .then((response) => response.data);
   }
 
   downloadArtifact(artifactId) {
-    return this.axios
-      .get("/actions/artifacts", { per_page: 100 })
-      .then((response) => response.data);
+    return this.axios.get(`/artifacts/${artifactId}/zip`).then((response) => {
+      console.log(JSON.stringify(response.headers, null, 2));
+      console.log(response.headers["Location"]);
+    });
   }
 }
 

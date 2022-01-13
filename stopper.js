@@ -4,6 +4,10 @@ const fs = require("fs-extra");
 const { create } = require("@actions/artifact");
 const { artifactApi } = require("./artifactApi");
 
+const downloadFolder = path.join(process.env["RUNNER_TEMP"], "turbo-downloads");
+
+fs.ensureDirSync(downloadFolder);
+
 function pidIsRunning(pid) {
   try {
     process.kill(+pid, 0);
@@ -70,9 +74,25 @@ function stopServer() {
   }
 }
 
-async function stopper() {
+async function downloadArtifacts() {
   const list = await artifactApi.listArtifacts();
 
+  await Promise.all(list.artifacts.map(artifact => {
+    return new Promise(resolve => {
+      artifactApi.downloadArtifact()
+    });
+  }))
+}
+
+async function stopper() {
+  await downloadArtifacts();
+
+  const files = fs.readdirSync(downloadFolder);
+
+  (files || []).forEach(file => {
+    const stats = fs.statSync(file);
+    core.info(`${file} -> ${stats.size}`);
+  })
 
   stopServer();
 
