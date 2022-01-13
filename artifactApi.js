@@ -20,7 +20,7 @@ class ArtifactApi {
   listArtifacts() {
     return this.axios
       .get("/artifacts", { per_page: 100 })
-      .then((response) => response.data);
+      .then((response) => JSON.parse(response.data));
   }
 
   downloadArtifact(artifactId) {
