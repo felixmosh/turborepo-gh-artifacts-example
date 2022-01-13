@@ -24,6 +24,9 @@ function pidIsRunning(pid) {
 }
 
 async function upload() {
+  const list = await artifactApi.listArtifacts();
+  const existingArtifacts = list.artifacts.map((artifact) => artifact.name);
+
   const tempDir = path.join(
     process.env["RUNNER_TEMP"] || __dirname,
     "turbo-cache"
@@ -48,22 +51,27 @@ async function upload() {
   core.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
   await Promise.all(
-    artifactFiles.map(async (artifactFilename) => {
-      const filenameWithoutExt = path.basename(
-        artifactFilename,
-        path.extname(artifactFilename)
-      );
+    artifactFiles
+      .map((artifactFilename) => {
+        const artifactId = path.basename(
+          artifactFilename,
+          path.extname(artifactFilename)
+        );
 
-      core.info(`Uploading ${artifactFilename}`);
+        return { artifactFilename, artifactId };
+      })
+      .filter(({ artifactId }) => !existingArtifacts.includes(artifactId))
+      .map(async ({ artifactFilename, artifactId }) => {
+        core.info(`Uploading ${artifactFilename}`);
 
-      await client.uploadArtifact(
-        filenameWithoutExt,
-        [path.join(tempDir, artifactFilename)],
-        tempDir
-      );
+        await client.uploadArtifact(
+          artifactId,
+          [path.join(tempDir, artifactFilename)],
+          tempDir
+        );
 
-      core.info(`Uploaded ${artifactFilename} successfully`);
-    })
+        core.info(`Uploaded ${artifactFilename} successfully`);
+      })
   );
 }
 
@@ -94,9 +102,7 @@ async function extractArchives() {
         await zip.extract(null, downloadFolder);
         await zip.close();
       })
-  ).catch((error) => {
-    core.error(error);
-  });
+  );
 }
 
 async function downloadArtifacts() {
@@ -128,18 +134,18 @@ async function downloadArtifacts() {
 }
 
 async function stopper() {
-  await downloadArtifacts();
+  // await downloadArtifacts();
 
-  const files = fs.readdirSync(downloadFolder);
-
-  (files || []).forEach((file) => {
-    const stats = fs.statSync(path.join(downloadFolder, file));
-    core.info(`${file} -> ${stats.size}`);
-  });
+  // const files = fs.readdirSync(downloadFolder);
+  //
+  // (files || []).forEach((file) => {
+  //   const stats = fs.statSync(path.join(downloadFolder, file));
+  //   core.info(`${file} -> ${stats.size}`);
+  // });
 
   stopServer();
 
-  // await upload();
+  await upload();
 }
 
 stopper().catch((error) => {
