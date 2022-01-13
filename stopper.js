@@ -87,7 +87,7 @@ async function extractArchives() {
     archives
       .filter((file) => file.endsWith(".zip"))
       .map(async (filename) => {
-        const zip = new StreamZip({
+        const zip = new StreamZip.async({
           file: path.join(tempArchiveFolder, filename),
         });
 
