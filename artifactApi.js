@@ -7,6 +7,7 @@ class ArtifactApi {
       required: true,
       trimWhitespace: true,
     });
+    core.info({ repoToken, l: repoToken.length });
     this.axios = new Axios({
       baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`,
       headers: {
@@ -17,6 +18,12 @@ class ArtifactApi {
   }
 
   listArtifacts() {
+    return this.axios
+      .get("/actions/artifacts", { per_page: 100 })
+      .then((response) => response.data);
+  }
+
+  downloadArtifact(artifactId) {
     return this.axios
       .get("/actions/artifacts", { per_page: 100 })
       .then((response) => response.data);

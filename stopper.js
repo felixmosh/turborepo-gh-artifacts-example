@@ -63,16 +63,17 @@ function stopServer() {
   core.info(`Found server pid: ${serverPID}`);
 
   if (serverPID && pidIsRunning(serverPID)) {
-    core.info(`killing server pid: ${serverPID}`);
+    core.info(`Killing server pid: ${serverPID}`);
     process.kill(+serverPID);
   } else {
-    core.info(`server with pid: ${serverPID} is not running`);
+    core.info(`Server with pid: ${serverPID} is not running`);
   }
 }
 
 async function stopper() {
   const list = await artifactApi.listArtifacts();
-  core.info(JSON.stringify(list, null, 2));
+
+
   stopServer();
 
   // await upload();
