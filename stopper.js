@@ -3,16 +3,13 @@ const path = require("path");
 const fs = require("fs-extra");
 const { create } = require("@actions/artifact");
 const { artifactApi } = require("./artifactApi");
-const StreamZip = require("node-stream-zip");
 
-const downloadFolder = path.join(process.env["RUNNER_TEMP"], "turbo-downloads");
-const tempArchiveFolder = path.join(
-  process.env["RUNNER_TEMP"],
-  "turbo-archives"
+const cachefolder = path.join(
+  process.env["RUNNER_TEMP"] || __dirname,
+  "turbo-cache"
 );
 
-fs.ensureDirSync(downloadFolder);
-fs.ensureDirSync(tempArchiveFolder);
+fs.ensureDirSync(cachefolder);
 
 function pidIsRunning(pid) {
   try {
@@ -27,24 +24,9 @@ async function upload() {
   const list = await artifactApi.listArtifacts();
   const existingArtifacts = list.artifacts.map((artifact) => artifact.name);
 
-  const tempDir = path.join(
-    process.env["RUNNER_TEMP"] || __dirname,
-    "turbo-cache"
-  );
-
-  fs.ensureDirSync(tempDir);
-
-  core.info("Server logs:");
-  core.info(
-    fs.readFileSync(path.join(tempDir, "out.log"), {
-      encoding: "utf8",
-      flag: "r",
-    })
-  );
-
   const client = create();
 
-  const files = fs.readdirSync(tempDir);
+  const files = fs.readdirSync(cachefolder);
 
   const artifactFiles = files.filter((filename) => filename.endsWith(".gz"));
 
@@ -66,8 +48,8 @@ async function upload() {
 
         await client.uploadArtifact(
           artifactId,
-          [path.join(tempDir, artifactFilename)],
-          tempDir
+          [path.join(cachefolder, artifactFilename)],
+          cachefolder
         );
 
         core.info(`Uploaded ${artifactFilename} successfully`);
@@ -88,64 +70,22 @@ function stopServer() {
   }
 }
 
-async function extractArchives() {
-  const archives = fs.readdirSync(tempArchiveFolder);
-
-  return Promise.all(
-    archives
-      .filter((file) => file.endsWith(".zip"))
-      .map(async (filename) => {
-        const zip = new StreamZip.async({
-          file: path.join(tempArchiveFolder, filename),
-        });
-
-        await zip.extract(null, downloadFolder);
-        await zip.close();
-      })
-  );
-}
-
-async function downloadArtifacts() {
-  const list = await artifactApi.listArtifacts();
-
-  await Promise.all(
-    list.artifacts.map((artifact) => {
-      return new Promise((resolve) => {
-        artifactApi.downloadArtifact(artifact.id).then((response) => {
-          const writeStream = fs.createWriteStream(
-            path.join(tempArchiveFolder, `${artifact.name}.zip`)
-          );
-
-          response.data.pipe(writeStream);
-          writeStream.on("finish", () => {
-            resolve();
-          });
-
-          writeStream.on("error", (error) => {
-            core.error(error);
-            resolve();
-          });
-        });
-      });
+function printServerLogs() {
+  core.debug("Server logs:");
+  core.debug(
+    fs.readFileSync(path.join(cachefolder, "out.log"), {
+      encoding: "utf8",
+      flag: "r",
     })
   );
-
-  await extractArchives();
 }
 
 async function stopper() {
-  // await downloadArtifacts();
-
-  // const files = fs.readdirSync(downloadFolder);
-  //
-  // (files || []).forEach((file) => {
-  //   const stats = fs.statSync(path.join(downloadFolder, file));
-  //   core.info(`${file} -> ${stats.size}`);
-  // });
-
   stopServer();
 
   await upload();
+
+  printServerLogs();
 }
 
 stopper().catch((error) => {

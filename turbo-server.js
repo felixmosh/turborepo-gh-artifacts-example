@@ -1,9 +1,9 @@
 const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
-const { create } = require("@actions/artifact");
 const asyncHandler = require("express-async-handler");
-const http = require('https');
+const { artifactApi } = require("./artifactApi");
+const { downloadArtifact } = require("./download");
 
 async function startServer() {
   const port = process.env.PORT || 9080;
@@ -15,16 +15,9 @@ async function startServer() {
   fs.ensureDirSync(tempDir);
 
   const app = express();
-  const artifactClient = create();
 
   app.all("*", (req, res, next) => {
-    console.info(
-      `Got a ${req.method} request`,
-      req.path,
-      req.params,
-      req.headers,
-      req.query
-    );
+    console.info(`Got a ${req.method} request`, req.path);
     next();
   });
 
@@ -32,24 +25,34 @@ async function startServer() {
     "/v8/artifacts/:artifactId",
     asyncHandler(async (req, res) => {
       const { artifactId } = req.params;
+      const list = await artifactApi.listArtifacts();
+      console.log(`Found ${list.total_count} artifacts.`);
 
-      const filename = `${artifactId}.gz`;
+      const existingArtifact = list.artifacts.find(
+        (artifact) => artifact.name === artifactId
+      );
 
+      if (existingArtifact) {
+        console.log(`Artifact ${artifactId} found.`);
+        await downloadArtifact(existingArtifact, tempDir);
+        console.log(
+          `Artifact ${artifactId} downloaded successfully to ${tempDir}/${artifactId}.gz.`
+        );
+      }
 
-      const filepath = path.join(tempDir, filename);
+      const filepath = path.join(tempDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
+        console.log(`Artifact ${artifactId} not found.`);
         return res.status(404).send("Not found");
       }
 
       const readStream = fs.createReadStream(filepath);
-      readStream.on("open", function () {
-        // This just pipes the read stream to the response object (which goes to the client)
+      readStream.on("open", () => {
         readStream.pipe(res);
       });
 
-      // This catches any errors that happen while creating the readable stream (usually invalid names)
-      readStream.on("error", function (err) {
+      readStream.on("error", (err) => {
         console.error(err);
         res.end(err);
       });
@@ -67,6 +70,7 @@ async function startServer() {
 
     writeStream.on("error", (err) => {
       console.error(err);
+      res.status(500).send("ERROR");
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
