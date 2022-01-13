@@ -97,11 +97,8 @@ function printServerLogs() {
 async function stopper() {
   stopServer();
 
-  core.info('\n');
-
   await uploadArtifacts();
 
-  core.info('\n');
   printServerLogs();
 }
 
