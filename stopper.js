@@ -71,8 +71,8 @@ function stopServer() {
 }
 
 function printServerLogs() {
-  core.debug("Server logs:");
-  core.debug(
+  core.info("Server logs:");
+  core.info(
     fs.readFileSync(path.join(cachefolder, "out.log"), {
       encoding: "utf8",
       flag: "r",
