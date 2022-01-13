@@ -43,14 +43,18 @@ async function uploadArtifacts() {
     })
     .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
 
-  core.info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
-  core.info(
-    JSON.stringify(
-      artifactsToUpload.map(({ artifactId }) => artifactId),
-      null,
-      2
-    )
-  );
+  if(artifactsToUpload.length) {
+    core.info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+    core.info(
+      JSON.stringify(
+        artifactsToUpload.map(({ artifactId }) => artifactId),
+        null,
+        2
+      )
+    );
+  } else {
+    core.info(`There is nothing to upload.`);
+  }
 
   await Promise.all(
     artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {

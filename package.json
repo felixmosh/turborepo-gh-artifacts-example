@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build:action": "ncc build turbo-server.js -o dist",
-    "build": "rm -rf node_modules/.cache/turbo && turbo run build --api=\"http://localhost:9080\" --token=\"xxxxxxxxxxxxxxxxx\" --team=\"hayokra\"",
+    "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""

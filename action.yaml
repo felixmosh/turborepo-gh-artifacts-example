@@ -6,6 +6,9 @@ inputs:
   repo-token:
     description: 'An access token with repo permission'
     required: true
+  server-token:
+    description: 'An access token of the local turbo-server'
+    required: true
 
 runs:
   using: 'node12'
