@@ -1,10 +1,10 @@
-const core = require('@actions/core');
-const path = require('path');
-const fs = require('fs-extra');
-const { create } = require('@actions/artifact');
-const { artifactApi } = require('./artifactApi');
+const core = require("@actions/core");
+const path = require("path");
+const fs = require("fs-extra");
+const { create } = require("@actions/artifact");
+const { artifactApi } = require("./artifactApi");
 
-const downloadFolder = path.join(process.env['RUNNER_TEMP'], 'turbo-downloads');
+const downloadFolder = path.join(process.env["RUNNER_TEMP"], "turbo-downloads");
 
 fs.ensureDirSync(downloadFolder);
 
@@ -19,17 +19,17 @@ function pidIsRunning(pid) {
 
 async function upload() {
   const tempDir = path.join(
-    process.env['RUNNER_TEMP'] || __dirname,
-    'turbo-cache'
+    process.env["RUNNER_TEMP"] || __dirname,
+    "turbo-cache"
   );
 
   fs.ensureDirSync(tempDir);
 
-  core.info('Server logs:');
+  core.info("Server logs:");
   core.info(
-    fs.readFileSync(path.join(tempDir, 'out.log'), {
-      encoding: 'utf8',
-      flag: 'r',
+    fs.readFileSync(path.join(tempDir, "out.log"), {
+      encoding: "utf8",
+      flag: "r",
     })
   );
 
@@ -37,7 +37,7 @@ async function upload() {
 
   const files = fs.readdirSync(tempDir);
 
-  const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
+  const artifactFiles = files.filter((filename) => filename.endsWith(".gz"));
 
   core.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
@@ -62,7 +62,7 @@ async function upload() {
 }
 
 function stopServer() {
-  const serverPID = core.getState('TURBO_LOCAL_SERVER_PID');
+  const serverPID = core.getState("TURBO_LOCAL_SERVER_PID");
 
   core.info(`Found server pid: ${serverPID}`);
 
@@ -76,12 +76,27 @@ function stopServer() {
 
 async function downloadArtifacts() {
   const list = await artifactApi.listArtifacts();
-  console.log(list);
-  console.log(JSON.stringify(list, null, 2));
+
   await Promise.all(
     list.artifacts.map((artifact) => {
       return new Promise((resolve) => {
-        artifactApi.downloadArtifact(artifact.id).then(resolve);
+        artifactApi.downloadArtifact(artifact.id).then((response) => {
+          const writeStream = fs.createWriteStream(
+            path.join(downloadFolder, `${artifact.name}.gzzzz`)
+          );
+
+          response.data.pipe(writeStream);
+          console.log(JSON.stringify(response.status, null, 2));
+          console.log(JSON.stringify(response.headers, null, 2));
+          writeStream.on("finish", () => {
+            resolve();
+          });
+
+          writeStream.on("error", (error) => {
+            core.error(error);
+            resolve();
+          });
+        });
       });
     })
   );

@@ -24,10 +24,7 @@ class ArtifactApi {
   }
 
   downloadArtifact(artifactId) {
-    return this.axios.get(`/artifacts/${artifactId}/zip`).then((response) => {
-      console.log(JSON.stringify(response.headers, null, 2));
-      console.log(response.headers["Location"]);
-    });
+    return this.axios.get(`/artifacts/${artifactId}/zip`, {responseType: 'stream'});
   }
 }
 
