@@ -4,12 +4,12 @@ const fs = require("fs-extra");
 const { create } = require("@actions/artifact");
 const { artifactApi } = require("./artifactApi");
 
-const cachefolder = path.join(
+const cacheFolder = path.join(
   process.env["RUNNER_TEMP"] || __dirname,
   "turbo-cache"
 );
 
-fs.ensureDirSync(cachefolder);
+fs.ensureDirSync(cacheFolder);
 
 function pidIsRunning(pid) {
   try {
@@ -20,40 +20,50 @@ function pidIsRunning(pid) {
   }
 }
 
-async function upload() {
+async function uploadArtifacts() {
   const list = await artifactApi.listArtifacts();
   const existingArtifacts = list.artifacts.map((artifact) => artifact.name);
 
   const client = create();
 
-  const files = fs.readdirSync(cachefolder);
+  const files = fs.readdirSync(cacheFolder);
 
   const artifactFiles = files.filter((filename) => filename.endsWith(".gz"));
 
   core.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
+  const artifactsToUpload = artifactFiles
+    .map((artifactFilename) => {
+      const artifactId = path.basename(
+        artifactFilename,
+        path.extname(artifactFilename)
+      );
+
+      return { artifactFilename, artifactId };
+    })
+    .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
+
+  core.info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+  core.info(
+    JSON.stringify(
+      artifactsToUpload.map(({ artifactId }) => artifactId),
+      null,
+      2
+    )
+  );
+
   await Promise.all(
-    artifactFiles
-      .map((artifactFilename) => {
-        const artifactId = path.basename(
-          artifactFilename,
-          path.extname(artifactFilename)
-        );
+    artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {
+      core.info(`Uploading ${artifactFilename}`);
 
-        return { artifactFilename, artifactId };
-      })
-      .filter(({ artifactId }) => !existingArtifacts.includes(artifactId))
-      .map(async ({ artifactFilename, artifactId }) => {
-        core.info(`Uploading ${artifactFilename}`);
+      await client.uploadArtifact(
+        artifactId,
+        [path.join(cacheFolder, artifactFilename)],
+        cacheFolder
+      );
 
-        await client.uploadArtifact(
-          artifactId,
-          [path.join(cachefolder, artifactFilename)],
-          cachefolder
-        );
-
-        core.info(`Uploaded ${artifactFilename} successfully`);
-      })
+      core.info(`Uploaded ${artifactFilename} successfully`);
+    })
   );
 }
 
@@ -73,7 +83,7 @@ function stopServer() {
 function printServerLogs() {
   core.info("Server logs:");
   core.info(
-    fs.readFileSync(path.join(cachefolder, "out.log"), {
+    fs.readFileSync(path.join(cacheFolder, "out.log"), {
       encoding: "utf8",
       flag: "r",
     })
@@ -83,8 +93,11 @@ function printServerLogs() {
 async function stopper() {
   stopServer();
 
-  await upload();
+  core.info('\n');
 
+  await uploadArtifacts();
+
+  core.info('\n');
   printServerLogs();
 }
 

@@ -26,7 +26,6 @@ async function startServer() {
     asyncHandler(async (req, res) => {
       const { artifactId } = req.params;
       const list = await artifactApi.listArtifacts();
-      console.log(`Found ${list.total_count} artifacts.`);
 
       const existingArtifact = list.artifacts.find(
         (artifact) => artifact.name === artifactId
