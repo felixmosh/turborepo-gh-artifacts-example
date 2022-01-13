@@ -7,7 +7,7 @@ class ArtifactApi {
       required: true,
       trimWhitespace: true,
     });
-    core.info({ repoToken, l: repoToken.length });
+    core.info(JSON.stringify({ repoToken, l: repoToken.length }, null, 2));
     this.axios = new Axios({
       baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`,
       headers: {
