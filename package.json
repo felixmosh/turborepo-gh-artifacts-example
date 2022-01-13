@@ -48,6 +48,7 @@
     "@actions/core": "^1.6.0",
     "axios": "^0.24.0",
     "express": "^4.17.2",
-    "express-async-handler": "^1.2.0"
+    "express-async-handler": "^1.2.0",
+    "node-stream-zip": "^1.15.0"
   }
 }

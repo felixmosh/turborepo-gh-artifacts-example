@@ -3,10 +3,16 @@ const path = require("path");
 const fs = require("fs-extra");
 const { create } = require("@actions/artifact");
 const { artifactApi } = require("./artifactApi");
+const StreamZip = require("node-stream-zip");
 
 const downloadFolder = path.join(process.env["RUNNER_TEMP"], "turbo-downloads");
+const tempArchiveFolder = path.join(
+  process.env["RUNNER_TEMP"],
+  "turbo-archives"
+);
 
 fs.ensureDirSync(downloadFolder);
+fs.ensureDirSync(tempArchiveFolder);
 
 function pidIsRunning(pid) {
   try {
@@ -74,6 +80,25 @@ function stopServer() {
   }
 }
 
+async function extractArchives() {
+  const archives = fs.readdirSync(tempArchiveFolder);
+
+  return Promise.all(
+    archives
+      .filter((file) => file.endsWith(".zip"))
+      .map(async (filename) => {
+        const zip = new StreamZip({
+          file: path.join(tempArchiveFolder, filename),
+        });
+
+        await zip.extract(null, downloadFolder);
+        await zip.close();
+      })
+  ).catch((error) => {
+    core.error(error);
+  });
+}
+
 async function downloadArtifacts() {
   const list = await artifactApi.listArtifacts();
 
@@ -82,12 +107,10 @@ async function downloadArtifacts() {
       return new Promise((resolve) => {
         artifactApi.downloadArtifact(artifact.id).then((response) => {
           const writeStream = fs.createWriteStream(
-            path.join(downloadFolder, `${artifact.name}.gzzzz`)
+            path.join(tempArchiveFolder, `${artifact.name}.zip`)
           );
 
           response.data.pipe(writeStream);
-          console.log(JSON.stringify(response.status, null, 2));
-          console.log(JSON.stringify(response.headers, null, 2));
           writeStream.on("finish", () => {
             resolve();
           });
@@ -100,6 +123,8 @@ async function downloadArtifacts() {
       });
     })
   );
+
+  await extractArchives();
 }
 
 async function stopper() {
