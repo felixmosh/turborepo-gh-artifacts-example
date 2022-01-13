@@ -1,28 +1,40 @@
-const express = require("express");
-const fs = require("fs-extra");
-const path = require("path");
-const asyncHandler = require("express-async-handler");
-const { artifactApi } = require("./artifactApi");
-const { downloadArtifact } = require("./download");
+const express = require('express');
+const fs = require('fs-extra');
+const path = require('path');
+const asyncHandler = require('express-async-handler');
+const { artifactApi } = require('./artifactApi');
+const { downloadArtifact } = require('./download');
+const core = require('@actions/core');
 
 async function startServer() {
   const port = process.env.PORT || 9080;
   const tempDir = path.join(
-    process.env["RUNNER_TEMP"] || __dirname,
-    "turbo-cache"
+    process.env['RUNNER_TEMP'] || __dirname,
+    'turbo-cache'
   );
 
   fs.ensureDirSync(tempDir);
 
   const app = express();
+  const serverToken = core.getInput('server-token', {
+    required: true,
+    trimWhitespace: true,
+  });
 
-  app.all("*", (req, res, next) => {
+  app.all('*', (req, res, next) => {
     console.info(`Got a ${req.method} request`, req.path);
+    const { authorization = '' } = req.headers;
+    const [type = '', token = ''] = authorization.split(' ');
+
+    if (type !== 'Bearer' || token !== serverToken) {
+      return res.status(401).send('unauthorized');
+    }
+
     next();
   });
 
   app.get(
-    "/v8/artifacts/:artifactId",
+    '/v8/artifacts/:artifactId',
     asyncHandler(async (req, res) => {
       const { artifactId } = req.params;
       const list = await artifactApi.listArtifacts();
@@ -43,22 +55,22 @@ async function startServer() {
 
       if (!fs.pathExistsSync(filepath)) {
         console.log(`Artifact ${artifactId} not found.`);
-        return res.status(404).send("Not found");
+        return res.status(404).send('Not found');
       }
 
       const readStream = fs.createReadStream(filepath);
-      readStream.on("open", () => {
+      readStream.on('open', () => {
         readStream.pipe(res);
       });
 
-      readStream.on("error", (err) => {
+      readStream.on('error', (err) => {
         console.error(err);
         res.end(err);
       });
     })
   );
 
-  app.put("/v8/artifacts/:artifactId", (req, res) => {
+  app.put('/v8/artifacts/:artifactId', (req, res) => {
     const artifactId = req.params.artifactId;
     const filename = `${artifactId}.gz`;
 
@@ -67,18 +79,18 @@ async function startServer() {
     // This pipes the POST data to the file
     req.pipe(writeStream);
 
-    writeStream.on("error", (err) => {
+    writeStream.on('error', (err) => {
       console.error(err);
-      res.status(500).send("ERROR");
+      res.status(500).send('ERROR');
     });
 
     // After all the data is saved, respond with a simple html form so they can post more data
-    req.on("end", () => {
-      res.send("OK");
+    req.on('end', () => {
+      res.send('OK');
     });
   });
 
-  app.disable("etag");
+  app.disable('etag');
 
   app.listen(port, () => {
     console.log(`Cache dir: ${tempDir}`);
