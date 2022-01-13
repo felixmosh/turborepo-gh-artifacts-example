@@ -3,6 +3,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const { create } = require("@actions/artifact");
 const asyncHandler = require("express-async-handler");
+const http = require('https');
 
 async function startServer() {
   const port = process.env.PORT || 9080;
@@ -33,11 +34,7 @@ async function startServer() {
       const { artifactId } = req.params;
 
       const filename = `${artifactId}.gz`;
-      try {
-        await artifactClient.downloadArtifact(artifactId, tempDir);
-      } catch (e) {
-        console.log(e);
-      }
+
 
       const filepath = path.join(tempDir, filename);
 

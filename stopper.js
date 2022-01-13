@@ -2,6 +2,7 @@ const core = require("@actions/core");
 const path = require("path");
 const fs = require("fs-extra");
 const { create } = require("@actions/artifact");
+const { artifactApi } = require("./artifactApi");
 
 function pidIsRunning(pid) {
   try {
@@ -56,7 +57,7 @@ async function upload() {
   );
 }
 
-async function stopper() {
+function stopServer() {
   const serverPID = core.getState("TURBO_LOCAL_SERVER_PID");
 
   core.info(`Found server pid: ${serverPID}`);
@@ -67,8 +68,14 @@ async function stopper() {
   } else {
     core.info(`server with pid: ${serverPID} is not running`);
   }
+}
 
-  await upload();
+async function stopper() {
+  const list = await artifactApi.listArtifacts();
+  core.info(JSON.stringify(list, null, 2));
+  stopServer();
+
+  // await upload();
 }
 
 stopper().catch((error) => {

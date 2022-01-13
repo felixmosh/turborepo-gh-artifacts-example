@@ -35,6 +35,8 @@ jobs:
 
       - name: Turborepo local server
         uses: ./
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: yarn build
