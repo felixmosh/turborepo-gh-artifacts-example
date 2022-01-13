@@ -77,11 +77,13 @@ function stopServer() {
 async function downloadArtifacts() {
   const list = await artifactApi.listArtifacts();
 
-  await Promise.all(list.artifacts.map(artifact => {
-    return new Promise(resolve => {
-      artifactApi.downloadArtifact()
-    });
-  }))
+  await Promise.all(
+    list.artifacts.map((artifact) => {
+      return new Promise((resolve) => {
+        artifactApi.downloadArtifact(artifact.id).then(resolve);
+      });
+    })
+  );
 }
 
 async function stopper() {
@@ -89,10 +91,10 @@ async function stopper() {
 
   const files = fs.readdirSync(downloadFolder);
 
-  (files || []).forEach(file => {
+  (files || []).forEach((file) => {
     const stats = fs.statSync(file);
     core.info(`${file} -> ${stats.size}`);
-  })
+  });
 
   stopServer();
 
