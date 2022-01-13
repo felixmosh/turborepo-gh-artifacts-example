@@ -108,7 +108,7 @@ async function stopper() {
   const files = fs.readdirSync(downloadFolder);
 
   (files || []).forEach((file) => {
-    const stats = fs.statSync(file);
+    const stats = fs.statSync(path.join(downloadFolder, file));
     core.info(`${file} -> ${stats.size}`);
   });
 
