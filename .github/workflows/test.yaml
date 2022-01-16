@@ -39,8 +39,5 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           server-token: ${{ secrets.TURBO_SERVER_TOKEN }}
 
-      - name: server log
-        run: cat "$RUNNER_TEMP/turbo-cache/out.log"
-
       - name: Build
         run: yarn build --api="http://127.0.0.1:9080" --token="${{ secrets.TURBO_SERVER_TOKEN }}" --team="foo"
