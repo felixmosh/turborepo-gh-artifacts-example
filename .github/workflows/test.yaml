@@ -39,7 +39,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           server-token: ${{ secrets.TURBO_SERVER_TOKEN }}
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
       - name: Build
         run: yarn build --api="http://127.0.0.1:9080" --token="${{ secrets.TURBO_SERVER_TOKEN }}" --team="foo"
-
-
