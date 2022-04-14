@@ -7,7 +7,6 @@
     "packages/*"
   ],
   "scripts": {
-    "build:action": "ncc build turbo-server.js -o dist",
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
